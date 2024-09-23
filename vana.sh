@@ -101,6 +101,16 @@ function setup_hardhat() {
     echo "请输入您的冷键私钥以配置 accounts: [\"0x你的冷键私钥\"]。"
 }
 
+# 部署合约并提示用户保存地址函数
+function deploy_and_save_addresses() {
+    echo "部署合约..."
+    npx hardhat deploy --network satori --tags DLPDeploy
+
+    echo "请保存 DataLiquidityPool 和 DataLiquidityPoolToken 的部署地址。"
+    echo "按任意键返回主菜单..."
+    read -n 1 -s
+}
+
 # 部署环境函数
 function deploy_environment() {
     install_git
@@ -113,6 +123,7 @@ function deploy_environment() {
     run_keygen
     deploy_dlp_contract
     setup_hardhat
+    deploy_and_save_addresses
 }
 
 # 主菜单函数
