@@ -18,8 +18,6 @@ function install_python() {
     if ! python3 --version &> /dev/null; then
         echo "Python 未安装。正在安装 Python..."
         sudo apt update && sudo apt install -y python3 python3-pip
-    else
-        echo "Python 已安装：$(python3 --version)"
     fi
 }
 
@@ -29,15 +27,11 @@ function install_node() {
         echo "Node.js 未安装。正在安装 Node.js..."
         curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
         sudo apt install -y nodejs
-    else
-        echo "Node.js 已安装：$(node --version)"
     fi
 
     if ! npm --version &> /dev/null; then
         echo "npm 未安装。正在安装 npm..."
         sudo apt install -y npm
-    else
-        echo "npm 已安装：$(npm --version)"
     fi
 }
 
@@ -84,7 +78,7 @@ function deploy_dlp_contract() {
     echo "克隆 DLP 智能合约仓库..."
     git clone https://github.com/vana-com/vana-dlp-smart-contracts.git
     cd vana-dlp-smart-contracts || { echo "无法进入目录，脚本终止"; exit 1; }
-    
+
     echo "安装依赖项..."
     sudo apt install -y cmdtest
     npm install --global yarn
@@ -107,6 +101,33 @@ function deploy_and_save_addresses() {
     npx hardhat deploy --network satori --tags DLPDeploy
 
     echo "请保存 DataLiquidityPool 和 DataLiquidityPoolToken 的部署地址。"
+    echo "按任意键返回主菜单..."
+    read -n 1 -s
+}
+
+# 启动验证者节点函数
+function start_validator_node() {
+    cd ~/vana-dlp-chatgpt || { echo "无法进入目录，脚本终止"; exit 1; }
+
+    read -rp "请输入 DataLiquidityPool 地址 (DLP_SATORI_CONTRACT=0x...)：" dlp_satori_contract
+    read -rp "请输入 DataLiquidityPoolToken 地址 (DLP_TOKEN_SATORI_CONTRACT=0x...)：" dlp_token_satori_contract
+    read -rp "请输入 钱包公钥 (PRIVATE_FILE_ENCRYPTION_PUBLIC_KEY_BASE64)：" public_key
+
+    # 导入到 .env 文件中
+    echo "DLP_SATORI_CONTRACT=${dlp_satori_contract}" >> .env
+    echo "DLP_TOKEN_SATORI_CONTRACT=${dlp_token_satori_contract}" >> .env
+    echo "PRIVATE_FILE_ENCRYPTION_PUBLIC_KEY_BASE64=${public_key}" >> .env
+
+    echo "安装 Poetry..."
+    sudo apt install -y python3-poetry
+
+    echo "注册验证者节点..."
+    ./vanacli dlp register_validator --stake_amount 10
+
+    echo "启动验证者节点..."
+    poetry run python -m chatgpt.nodes.validator
+
+    echo "验证者节点启动配置已完成。"
     echo "按任意键返回主菜单..."
     read -n 1 -s
 }
@@ -138,6 +159,7 @@ function main_menu() {
         echo "退出脚本，请按键盘 ctrl+c 退出"
         echo "请选择要执行的操作:"
         echo "1) 部署环境"
+        echo "2) 启动验证者节点"
         echo "0) 退出"
         echo "================================================================"
         read -rp "输入您的选择: " choice
@@ -145,6 +167,9 @@ function main_menu() {
         case $choice in
             1)
                 deploy_environment
+                ;;
+            2)
+                start_validator_node
                 ;;
             0)
                 echo "退出脚本"
