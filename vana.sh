@@ -1,97 +1,150 @@
 #!/bin/bash
 
-# 检查并安装 Git
-check_git() {
-  if ! git --version &> /dev/null; then
-    echo "Git 未安装。正在安装 Git..."
-    sudo apt update && sudo apt install -y git
-  else
-    echo "Git 已安装：$(git --version)"
-  fi
+# 脚本保存路径
+SCRIPT_PATH="$HOME/vana.sh"
+
+# 安装 Git 函数
+function install_git() {
+    if ! git --version &> /dev/null; then
+        echo "Git 未安装。正在安装 Git..."
+        sudo apt update && sudo apt install -y git
+    else
+        echo "Git 已安装：$(git --version)"
+    fi
 }
 
-# 检查并安装 Python 3.11
-check_python() {
-  if ! python3.11 --version &> /dev/null; then
-    echo "Python 3.11 未安装。正在安装 Python 3.11..."
-    sudo apt update && sudo apt install -y software-properties-common
-    sudo add-apt-repository ppa:deadsnakes/ppa
-    sudo apt update && sudo apt install -y python3.11 python3.11-venv python3.11-dev
-  else
-    echo "Python 3.11 已安装：$(python3.11 --version)"
-  fi
+# 安装 Python 函数
+function install_python() {
+    if ! python3 --version &> /dev/null; then
+        echo "Python 未安装。正在安装 Python..."
+        sudo apt update && sudo apt install -y python3 python3-pip
+    else
+        echo "Python 已安装：$(python3 --version)"
+    fi
 }
 
-# 检查并安装 Poetry
-check_poetry() {
-  if ! poetry --version &> /dev/null; then
-    echo "Poetry 未安装。正在安装 Poetry..."
-    curl -sSL https://install.python-poetry.org | python3.11 -
-    echo "Poetry 已安装：$(poetry --version)"
-  else
-    echo "Poetry 已安装：$(poetry --version)"
-  fi
+# 安装 Node.js 和 npm 函数
+function install_node() {
+    if ! node --version &> /dev/null; then
+        echo "Node.js 未安装。正在安装 Node.js..."
+        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        sudo apt install -y nodejs
+    else
+        echo "Node.js 已安装：$(node --version)"
+    fi
+
+    if ! npm --version &> /dev/null; then
+        echo "npm 未安装。正在安装 npm..."
+        sudo apt install -y npm
+    else
+        echo "npm 已安装：$(npm --version)"
+    fi
 }
 
-# 检查并安装 Node.js 和 npm
-check_node_npm() {
-  if ! node --version &> /dev/null; then
-    echo "Node.js 未安装。正在安装 Node.js..."
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-    sudo apt install -y nodejs
-  else
-    echo "Node.js 已安装：$(node --version)"
-  fi
-
-  if ! npm --version &> /dev/null; then
-    echo "npm 未安装。正在安装 npm..."
-    sudo apt install -y npm
-  else
-    echo "npm 已安装：$(npm --version)"
-  fi
+# 安装 nvm 函数
+function install_nvm() {
+    if ! command -v nvm &> /dev/null; then
+        echo "nvm 未安装。正在安装 nvm..."
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    fi
 }
 
-# 克隆 Git 仓库并进入目录
-clone_and_enter_repo() {
-  echo "克隆仓库 vana-dlp-chatgpt..."
-  git clone https://github.com/vana-com/vana-dlp-chatgpt.git
-  cd vana-dlp-chatgpt || { echo "无法进入目录，脚本终止"; exit 1; }
+# 使用 Node.js 18 函数
+function use_node_18() {
+    nvm install 18
+    nvm use 18
 }
 
-# 安装项目依赖
-install_dependencies() {
-  echo "使用 pip 安装 vana..."
-  pip install vana || { echo "依赖安装失败，脚本终止"; exit 1; }
+# 克隆 Git 仓库并进入目录函数
+function clone_and_enter_repo() {
+    echo "克隆仓库 vana-dlp-chatgpt..."
+    git clone https://github.com/vana-com/vana-dlp-chatgpt.git
+    cd vana-dlp-chatgpt || { echo "无法进入目录，脚本终止"; exit 1; }
 }
 
-# 创建钱包
-create_wallet() {
-  echo "创建默认钱包..."
-  vanacli wallet create --wallet.name default --wallet.hotkey default
-  echo "请根据提示设置钱包安全密码..."
+# 安装项目依赖函数
+function install_dependencies() {
+    cp .env.example .env
+    echo "使用 pip 安装 vana..."
+    pip3 install vana || { echo "依赖安装失败，脚本终止"; exit 1; }
 }
 
-# 提示为两个地址提供资金
-fund_testnet_addresses() {
-  echo "提示：请使用测试网 VANA 为以下两个地址提供资金："
-  echo "https://faucet.vana.org/"
-  echo "请访问测试网水龙头获取测试 VANA 代币，并将资金发送到上述地址。"
+# 运行密钥生成函数
+function run_keygen() {
+    echo "运行密钥生成..."
+    ./keygen.sh
+    echo "请输入您的姓名、电子邮件和密钥时长。"
 }
 
-# 执行检查并安装
-check_git
-check_python
-check_poetry
-check_node_npm
+# 部署 DLP 智能合约函数
+function deploy_dlp_contract() {
+    cd .. || { echo "无法返回上级目录，脚本终止"; exit 1; }
+    echo "克隆 DLP 智能合约仓库..."
+    git clone https://github.com/vana-com/vana-dlp-smart-contracts.git
+    cd vana-dlp-smart-contracts || { echo "无法进入目录，脚本终止"; exit 1; }
+    
+    echo "安装依赖项..."
+    sudo apt install -y cmdtest
+    npm install --global yarn
+}
 
-# 克隆仓库并安装依赖
-clone_and_enter_repo
-install_dependencies
+# 初始化 npm 和安装 Hardhat 函数
+function setup_hardhat() {
+    npm init -y
+    npm install --save-dev hardhat
+    nvm install 18
+    nvm use 18
+    npm install --save-dev hardhat
+    npx hardhat
+    echo "请输入您的冷键私钥以配置 accounts: [\"0x你的冷键私钥\"]。"
+}
 
-# 创建钱包
-create_wallet
+# 部署环境函数
+function deploy_environment() {
+    install_git
+    install_python
+    install_node
+    install_nvm
+    use_node_18
+    clone_and_enter_repo
+    install_dependencies
+    run_keygen
+    deploy_dlp_contract
+    setup_hardhat
+}
 
-# 提示为两个地址提供资金
-fund_testnet_addresses
+# 主菜单函数
+function main_menu() {
+    while true; do
+        clear
+        echo "脚本由推特 @ferdie_jhovie 提供，免费开源，请勿相信收费"
+        echo "================================================================"
+        echo "节点社区 Telegram 群组: https://t.me/niuwuriji"
+        echo "节点社区 Telegram 频道: https://t.me/niuwuriji"
+        echo "节点社区 Discord 社群: https://discord.gg/GbMV5EcNWF"
+        echo "退出脚本，请按键盘 ctrl+c 退出"
+        echo "请选择要执行的操作:"
+        echo "1) 部署环境"
+        echo "0) 退出"
+        echo "================================================================"
+        read -rp "输入您的选择: " choice
 
-echo "所有依赖项已成功安装、仓库已克隆并创建钱包！"
+        case $choice in
+            1)
+                deploy_environment
+                ;;
+            0)
+                echo "退出脚本"
+                exit 0
+                ;;
+            *)
+                echo "无效的选择，请重新输入"
+                ;;
+        esac
+    done
+}
+
+# 启动主菜单
+main_menu
