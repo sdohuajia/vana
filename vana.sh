@@ -68,6 +68,9 @@ function install_dependencies() {
 
 # 运行密钥生成函数
 function run_keygen() {
+    echo "创建默认钱包..."
+    vanacli wallet create --wallet.name default --wallet.hotkey default
+
     echo "运行密钥生成..."
     ./keygen.sh
     echo "请输入您的姓名、电子邮件和密钥时长。"
