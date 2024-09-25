@@ -86,6 +86,22 @@ function deploy_dlp_contract() {
     echo "安装依赖项..."
     sudo apt install -y cmdtest
     npm install --global yarn
+
+    # 提示用户输入信息并导入到 .env 文件
+    read -p "请输入您的冷键私钥 (DEPLOYER_PRIVATE_KEY=0x...): " deployer_private_key
+    read -p "请输入您的冷键地址 (OWNER_ADDRESS=0x...): " owner_address
+    read -p "请输入 DLP 名称 (DLP_NAME=...): " dlp_name
+    read -p "请输入 DLP 代币名称 (DLP_TOKEN_NAME=...): " dlp_token_name
+    read -p "请输入 DLP 代币符号 (DLP_TOKEN_SYMBOL=...): " dlp_token_symbol
+
+    # 导入到 .env 文件中
+    echo "DEPLOYER_PRIVATE_KEY=${deployer_private_key}" >> .env
+    echo "OWNER_ADDRESS=${owner_address}" >> .env
+    echo "DLP_NAME=${dlp_name}" >> .env
+    echo "DLP_TOKEN_NAME=${dlp_token_name}" >> .env
+    echo "DLP_TOKEN_SYMBOL=${dlp_token_symbol}" >> .env
+
+    echo "信息已保存到 .env 文件中。"
 }
 
 # 初始化 npm 和安装 Hardhat 函数
