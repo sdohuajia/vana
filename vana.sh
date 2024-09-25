@@ -93,7 +93,21 @@ function setup_hardhat() {
     nvm use 18
     npm install --save-dev hardhat
     npx hardhat
-    echo "请输入您的冷键私钥以配置 accounts: [\"0x你的冷键私钥\"]。"
+
+    # 提示用户输入冷键私钥
+    read -p "请输入您的冷键私钥以配置 accounts: [\"0x你的冷键私钥\"]: " cold_key
+
+    # 更新 hardhat.config.js 文件
+    echo "module.exports = {
+        solidity: \"^0.8.0\",
+        networks: {
+            hardhat: {
+                accounts: [\"$cold_key\"]
+            }
+        }
+    };" > hardhat.config.js
+
+    echo "Hardhat 配置完成。"
 }
 
 # 部署合约并提示用户保存地址函数
