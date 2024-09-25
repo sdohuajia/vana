@@ -62,6 +62,7 @@ function clone_and_enter_repo() {
 function install_dependencies() {
     cp .env.example .env
     echo "使用 pip 安装 vana..."
+    apt install python3-pip
     pip3 install vana || { echo "依赖安装失败，脚本终止"; exit 1; }
 }
 
